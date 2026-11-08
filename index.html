@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+<title>لو كنت مكانه</title>
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#3aafa9">
+
+
+<style>
+
+body{
+margin:0;
+font-family:Tahoma,sans-serif;
+background:linear-gradient(
+135deg,
+#dff6ff,
+#c3bef0,
+#f8f9fa
+);
+
+text-align:center;
+color:#333;
+}
+
+.screen{
+max-width:500px;
+margin:auto;
+padding:20px;
+}
+
+.character{
+font-size:80px;
+margin-top:20px;
+}
+
+h1{
+color:#2b7a78;
+}
+
+.card{
+background:white;
+padding:20px;
+margin:15px 0;
+border-radius:15px;
+box-shadow:0 3px 10px rgba(0,0,0,.1);
+}
+
+button{
+width:100%;
+padding:14px;
+margin-top:10px;
+border:none;
+border-radius:12px;
+background:#3aafa9;
+color:white;
+font-size:16px;
+}
+
+.hidden{
+display:none;
+}
+
+.progress{
+background:white;
+padding:20px;
+border-radius:15px;
+margin-top:20px;
+}
+
+#storyImage{
+font-size:80px;
+}
+
+progress{
+width:100%;
+height:20px;
+accent-color:#3aafa9;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="home" class="screen">
+
+<div class="character">🧑‍🎓</div>
+
+<h1> لو كنت مكانه؟</h1>
+
+<p style="color:#2b7a78;font-size:18px;">
+هل تستطيع رؤية العالم بعيون الآخرين؟
+اختبر قوة التعاطف لديك الآن.
+</p>
+
+
+<div class="card">
+قبل أن تحكم على الآخرين، جرّب أن ترى الحياة من منظورهم.
+</div>
+
+<h3>اختر شخصيتك</h3>
+
+<button onclick="chooseCharacter('👧')">
+👧 فتاة
+</button>
+
+<button onclick="chooseCharacter('👦')">
+👦 فتى
+</button>
+
+<button onclick="startStory(0)">
+ابدأ التجربة
+</button>
+
+<div class="progress">
+
+القصص المكتملة:
+<span id="completed">0</span>
+
+<br><br>
+
+النقاط:
+<span id="points">0</span> ⭐
+
+<br><br>
+
+<progress id="progressBar" value="0" max="100"></progress>
+
+<br><br>
+
+<div id="achievement"></div>
+<br>
+
+<button onclick="resetProgress()">
+🔄 إعادة التقدم
+</button>
+</div>
+
+</div>
+
+<div id="story" class="screen hidden">
+
+<h2 id="storyTitle"></h2>
+
+<p id="progressText"></p>
+
+<div class="card">
+
+<div id="storyImage">🙂</div>
+
+<p id="storyText"></p>
+
+</div>
+
+<div id="choices"></div>
+
+<div class="card hidden" id="resultBox">
+
+<p id="result"></p>
+
+<button onclick="swapView()">
+🔄 بدّل مكانك
+</button>
+
+<div id="otherView" class="hidden"></div>
+
+<button onclick="nextStory()">
+القصة التالية
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const stories = [
+
+{
+title:"الطالب الصامت",
+image:"🤐",
+text:"يجلس طالب وحده ولا يتحدث مع أحد.",
+view:"هذا الطالب انتقل حديثًا إلى المدرسة ويشعر بالخوف من تكوين صداقات جديدة.",
+choices:[
+{
+text:"السخرية منه",
+result:"شعر الطالب بمزيد من العزلة."
+},
+{
+text:"تجاهله",
+result:"بقي وحيدًا دون دعم."
+},
+{
+text:"الجلوس معه والتحدث",
+result:"بدأ يشعر بالأمان والانتماء."
+}
+]
+},
+
+{
+title:"الطالب المتأخر",
+image:"⏰",
+text:"دخل طالب متأخرًا إلى الفصل.",
+view:"كان يساعد والدته المريضة قبل الذهاب إلى المدرسة.",
+choices:[
+{
+text:"الحكم عليه بالكسل",
+result:"قد تكون ظلمته دون معرفة ظروفه."
+},
+{
+text:"تجاهله",
+result:"لم تعرف السبب الحقيقي."
+},
+{
+text:"سؤاله بلطف",
+result:"اكتشفت ظروفه وتعاطفت معه."
+}
+]
+},
+
+{
+title:"الصديق الحزين",
+image:"😔",
+text:"صديقك لم يعد يرد على الرسائل.",
+view:"يمر بظروف نفسية صعبة ويحتاج للدعم.",
+choices:[
+{
+text:"الغضب منه",
+result:"قد يزداد شعوره بالوحدة."
+},
+{
+text:"قطع العلاقة",
+result:"فقد مصدر دعم مهم."
+},
+{
+text:"الاطمئنان عليه",
+result:"شعر بأن هناك من يهتم به."
+}
+]
+},
+
+{
+title:"الطفلة الجديدة",
+image:"👧",
+text:"انتقلت طفلة جديدة إلى المدرسة ولم تتحدث مع أحد.",
+view:"تشعر بالتوتر لأنها تركت أصدقاءها وانتقلت لمكان جديد.",
+choices:[
+{
+text:"السخرية منها",
+result:"شعرت بالخوف أكثر."
+},
+{
+text:"تركها وحدها",
+result:"استمرت في الشعور بالوحدة."
+},
+{
+text:"الترحيب بها",
+result:"شعرت بالأمان وبدأت تكوّن صداقات."
+}
+]
+},
+
+{
+title:"الأب الغاضب",
+image:"👨",
+text:"عاد أحد الآباء إلى المنزل غاضبًا وتحدث بعصبية مع أسرته.",
+view:"قضى يومًا صعبًا في العمل وتلقى خبرًا مقلقًا بشأن وضعه المالي، لكنه لم يخبر أحدًا.",
+choices:[
+{
+text:"الحكم عليه بأنه شخص سيئ",
+result:"قد تكون نظرت إليه من زاوية واحدة فقط."
+},
+{
+text:"تجاهل ما يحدث",
+result:"بقي التوتر موجودًا دون فهم أسبابه."
+},
+{
+text:"محاولة فهم ما يمر به",
+result:"اكتشفت أن وراء الغضب ضغوطًا كبيرة يحتاج معها للدعم."
+}
+]
+}
+,
+{
+title:"الفتى المتنمر",
+image:"😠",
+text:"هناك فتى يضايق زملاءه باستمرار ويعاملهم بطريقة سيئة.",
+view:"يتعرض للتنمر خارج المدرسة ويشعر بالعجز والوحدة، لذلك يفرغ غضبه في الآخرين.",
+choices:[
+{
+text:"وصفه بالشرير فقط",
+result:"ربما رأيت السلوك ولم ترَ السبب الحقيقي."
+},
+{
+text:"تجاهله تمامًا",
+result:"استمرت المشكلة دون محاولة فهمها."
+},
+{
+text:"محاولة معرفة ما يمر به",
+result:"اكتشفت أن خلف السلوك السيئ معاناة تحتاج للمساعدة."
+}
+]
+},
+{
+title:"الأخ الذي سرق المال",
+image:"💵",
+text:"اكتشفت أن أخاك أخذ مبلغًا من المال دون إذن.",
+view:"كان يحتاج المال بشكل عاجل لشراء دواء لأحد أفراد الأسرة ولم يجد طريقة أخرى.",
+choices:[
+{
+text:"وصفه باللص",
+result:"حكمت على الفعل دون معرفة الظروف."
+},
+{
+text:"مقاطعته تمامًا",
+result:"ازدادت المشكلة وتعقدت العلاقة."
+},
+{
+text:"سؤاله عن السبب",
+result:"اكتشفت أن وراء التصرف أزمة حقيقية."
+}
+]
+},
+{
+title:"المعلمة القاسية",
+image:"👩‍🏫",
+text:"إحدى المعلمات توبخ الطلاب باستمرار وتبدو صارمة جدًا.",
+view:"تمر بظروف أسرية صعبة وتتحمل مسؤوليات كبيرة خارج المدرسة.",
+choices:[
+{
+text:"كرهها فورًا",
+result:"رأيت جانبًا واحدًا فقط من الصورة."
+},
+{
+text:"السخرية منها",
+result:"لم يساعد ذلك في فهم الموقف."
+},
+{
+text:"محاولة فهم ظروفها",
+result:"بدأت تدرك أن وراء الشدة ضغوطًا لا تراها."
+}
+]
+},
+{
+title:"العامل النائم",
+image:"😴",
+text:"رأيت عاملًا ينام أثناء العمل.",
+view:"يعمل في وظيفتين مختلفتين ليؤمن احتياجات أسرته.",
+choices:[
+{
+text:"اتهامه بالإهمال",
+result:"حكمت عليه بسرعة."
+},
+{
+text:"تصويره والسخرية منه",
+result:"زادت الإساءة دون معرفة الحقيقة."
+},
+{
+text:"التفكير في الأسباب",
+result:"اكتشفت أن الإرهاق وراء ما حدث."
+}
+]
+},
+{
+title:"الفتاة المشهورة",
+image:"📱",
+text:"يبدو أن الجميع يحب فتاة مشهورة على مواقع التواصل.",
+view:"تعاني من الوحدة والضغط النفسي رغم ما يظهر للناس.",
+choices:[
+{
+text:"الحسد والحكم عليها",
+result:"اعتمدت على المظاهر فقط."
+},
+{
+text:"تجاهل معاناتها",
+result:"فاتك جزء كبير من الحقيقة."
+},
+{
+text:"تذكر أن المظاهر قد تخدع",
+result:"نظرت للموقف بعمق أكبر."
+}
+]
+},
+{
+title:"السجين السابق",
+image:"⚖️",
+text:"انتقل شخص إلى الحي وعرفت أنه كان في السجن من قبل.",
+view:"أنهى عقوبته ويحاول بدء حياة جديدة وتصحيح أخطائه.",
+choices:[
+{
+text:"رفضه تمامًا",
+result:"منعته من فرصة التغيير."
+},
+{
+text:"نشر الشائعات عنه",
+result:"زادت معاناته."
+},
+{
+text:"منحه فرصة جديدة",
+result:"ساعدته على البدء من جديد."
+}
+]
+},
+{
+title:"الممرض المتجاهل",
+image:"🏥",
+text:"دخلت المستشفى وشعرت أن أحد الممرضين يتعامل ببرود ولم يهتم بأسئلتك.",
+view:"الممرض أنهى للتو محاولة إنقاذ مريض توفي رغم كل جهوده، وما زال تحت ضغط نفسي شديد.",
+choices:[
+{
+text:"الشكوى منه فورًا",
+result:"حكمت على موقف واحد دون معرفة ما حدث قبله."
+},
+{
+text:"الغضب منه",
+result:"زاد التوتر دون فهم السبب الحقيقي."
+},
+{
+text:"التفكير في ظروفه أولًا",
+result:"أدركت أن خلف التصرف قصة لم تكن تراها."
+}
+]
+},
+{
+title:"الطالب الغشاش",
+image:"📝",
+text:"اكتشفت أن طالبًا متفوقًا غش في الامتحان.",
+view:"كان يواجه ضغوطًا شديدة وخوفًا مرضيًا من الفشل بسبب توقعات أسرته العالية.",
+choices:[
+{
+text:"اعتباره شخصًا سيئًا",
+result:"وصفت الشخص كله بناءً على خطأ واحد."
+},
+{
+text:"السخرية منه أمام الجميع",
+result:"زادت المشكلة تعقيدًا."
+},
+{
+text:"محاولة فهم ما دفعه لذلك",
+result:"اكتشفت أن الخوف كان وراء التصرف الخاطئ."
+}
+]
+},
+{
+title:"الجار المزعج",
+image:"🔊",
+text:"جارك يصدر ضوضاء متكررة تزعج جميع السكان.",
+view:"يرعى طفلًا يعاني من اضطراب شديد ويحتاج إلى متابعة مستمرة داخل المنزل.",
+choices:[
+{
+text:"وصفه بعديم الاحترام",
+result:"اعتمدت على ما تراه فقط."
+},
+{
+text:"الدخول في شجار معه",
+result:"ازدادت المشكلة سوءًا."
+},
+{
+text:"محاولة معرفة ظروفه",
+result:"فهمت أن الواقع أكثر تعقيدًا مما يبدو."
+}
+]
+},
+{
+title:"الشاب المنعزل",
+image:"🖤",
+text:"يوجد شاب يرفض المشاركة في المناسبات ويتجنب الجميع.",
+view:"فقد شخصًا عزيزًا عليه منذ فترة قصيرة ويحاول التأقلم مع الأمر.",
+choices:[
+{
+text:"وصفه بالمتكبر",
+result:"فسرت الانعزال بطريقة خاطئة."
+},
+{
+text:"الابتعاد عنه",
+result:"ازداد شعوره بالوحدة."
+},
+{
+text:"تقديم الدعم له",
+result:"شعر أن هناك من يفهم ما يمر به."
+}
+]
+},
+{
+title:"الأم الصارمة",
+image:"👩‍👧",
+text:"تبدو أم شديدة جدًا مع أطفالها في الأماكن العامة.",
+view:"نشأت في بيئة صعبة وتخشى أن يقع أطفالها في الأخطاء نفسها التي مرت بها.",
+choices:[
+{
+text:"الحكم عليها فورًا",
+result:"رأيت التصرف ولم ترَ قصته."
+},
+{
+text:"انتقادها أمام الناس",
+result:"لم يساعد ذلك أحدًا."
+},
+{
+text:"محاولة فهم دوافعها",
+result:"اكتشفت أن الخوف على أطفالها هو ما يقود تصرفاتها."
+}
+]
+},
+{
+title:"العريس الهارب",
+image:"💍",
+text:"في يوم زفافه اختفى العريس ولم يحضر الحفل، وانتشرت الشائعات بأنه هرب.",
+view:"في طريقه للقاعة شاهد حادثًا خطيرًا وتوقف لإنقاذ المصابين ونقلهم للمستشفى.",
+choices:[
+{
+text:"وصفه بالخيانة",
+result:"حكمت على الموقف قبل معرفة الحقيقة."
+},
+{
+text:"نشر الشائعات عنه",
+result:"ساهمت في ظلم شخص لم تعرف ظروفه."
+},
+{
+text:"التريث قبل الحكم",
+result:"اكتشفت أن الحقيقة كانت مختلفة تمامًا."
+}
+]
+},
+{
+title:"الطبيب البارد",
+image:"🩺",
+text:"طبيب أخبر مريضًا بنتيجة صعبة دون أن يبدو عليه أي تأثر.",
+view:"قبل دقائق فقط فقد الطبيب أحد مرضاه وكان يحاول السيطرة على مشاعره ليستطيع إكمال عمله.",
+choices:[
+{
+text:"اعتباره عديم الرحمة",
+result:"رأيت التصرف ولم ترَ ما سبقه."
+},
+{
+text:"الشكوى منه",
+result:"حكمت على لحظة واحدة فقط."
+},
+{
+text:"التفكير في ظروفه",
+result:"اكتشفت أن خلف الهدوء قصة مؤلمة."
+}
+]
+},
+{
+title:"الأم التي تركت طفلها",
+image:"👶",
+text:"شاهدت أمًا تترك طفلها في دار رعاية وتغادر.",
+view:"تعاني من مرض خطير جعلها غير قادرة على رعاية طفلها وكانت تبحث له عن مكان آمن.",
+choices:[
+{
+text:"وصفها بالأم السيئة",
+result:"حكمت من الظاهر فقط."
+},
+{
+text:"انتقادها أمام الناس",
+result:"لم تعرف معاناتها الحقيقية."
+},
+{
+text:"محاولة فهم السبب",
+result:"اكتشفت أن القرار كان أشد ألمًا عليها من أي شخص آخر."
+}
+]
+},
+{
+title:"الرجل الذي رفض المساعدة",
+image:"🤝",
+text:"طلب شخص فقير المساعدة من رجل ميسور فرفض مساعدته.",
+view:"الرجل فقد ابنه الوحيد قبل أيام ويعيش صدمة شديدة جعلته غير قادر على التعامل مع أي شخص.",
+choices:[
+{
+text:"وصفه بالقسوة",
+result:"فسرت الموقف دون معرفة ما يمر به."
+},
+{
+text:"السخرية منه",
+result:"زدت الألم دون أن تدري."
+},
+{
+text:"التفكير أن لكل شخص قصة",
+result:"أدركت أن ما تراه ليس كل الحقيقة."
+}
+]
+},
+{
+title:"الرجل الذي يزور المقابر",
+image:"🕯️",
+text:"يرى الناس رجلًا يزور المقابر يوميًا ويجلس لساعات طويلة وحده.",
+view:"فقد زوجته وابنته في حادث واحد، ولم يبق له سوى زيارتهما والدعاء لهما.",
+choices:[
+{
+text:"اعتباره غريب الأطوار",
+result:"حكمت على تصرفه دون معرفة قصته."
+},
+{
+text:"السخرية منه",
+result:"زادت القسوة على شخص يعيش ألمًا عميقًا."
+},
+{
+text:"التفكير أن وراء كل شخص قصة",
+result:"اكتشفت أن الحزن قد يختبئ خلف تصرفات لا نفهمها."
+}
+]
+},
+{
+title:"الفتاة التي أفسدت حفل زفاف",
+image:"🎂",
+text:"في منتصف حفل زفاف بدأت فتاة بالبكاء والصراخ ثم غادرت القاعة.",
+view:"تلقت في تلك اللحظة خبر وفاة والدها بعد صراع طويل مع المرض.",
+choices:[
+{
+text:"وصفها بالأنانية",
+result:"حكمت على لحظة دون معرفة ما حدث."
+},
+{
+text:"نشر الشائعات عنها",
+result:"ساهمت في ظلمها أكثر."
+},
+{
+text:"التريث قبل الحكم",
+result:"اكتشفت أن الحقيقة كانت مؤلمة جدًا."
+}
+]
+},
+{
+title:"الشاب الذي هرب من الشرطة",
+image:"🚔",
+text:"بمجرد رؤية سيارة الشرطة بدأ شاب بالجري بعيدًا بسرعة.",
+view:"تعرض سابقًا لظلم شديد واعتقال بالخطأ، وأصبح يعاني من خوف شديد كلما رأى الشرطة.",
+choices:[
+{
+text:"اعتباره مجرمًا",
+result:"بنيت حكمك على الظاهر فقط."
+},
+{
+text:"اتهامه أمام الناس",
+result:"قد تكون ظلمته دون قصد."
+},
+{
+text:"التفكير في وجود سبب",
+result:"أدركت أن الخوف قد يكون وراء التصرف."
+}
+]
+},
+{
+title:"الطالب الأول الذي رسب",
+image:"🎓",
+text:"طالب متفوق دائمًا، لكنه رسب فجأة في أهم امتحان في حياته.",
+view:"كان يقضي لياليه في المستشفى بجوار والدته المريضة بالسرطان.",
+choices:[
+{
+text:"وصفه بالكسل",
+result:"فسرت النتيجة دون معرفة ظروفه."
+},
+{
+text:"السخرية من فشله",
+result:"زدت ألمه بدل دعمه."
+},
+{
+text:"محاولة فهم ما حدث",
+result:"اكتشفت أن خلف الفشل معركة لم يرها أحد."
+}
+]
+},
+{
+title:"الرجل الذي رفض التبرع",
+image:"🤝",
+text:"طلب شخص فقير المساعدة من رجل ميسور الحال لكنه رفض التبرع له.",
+view:"فقد ابنه الوحيد بعد سنوات من محاولة علاجه، وما زال يعيش صدمة قاسية جعلته ينعزل عن الآخرين.",
+choices:[
+{
+text:"وصفه بالبخل",
+result:"رأيت التصرف ولم ترَ الجرح الذي خلفه."
+},
+{
+text:"السخرية منه",
+result:"أضفت ألمًا جديدًا إلى معاناته."
+},
+{
+text:"التفكير أن لكل شخص ظروفه",
+result:"أدركت أن الحقيقة ليست دائمًا كما تبدو."
+}
+]
+}
+,
+{
+title:"🎁 القصة السرية",
+image:"🔒",
+text:"رأيت رجلاً عجوزًا يجلس وحده كل يوم في نفس المكان ويتحدث مع نفسه.",
+view:"كان يقرأ الرسائل القديمة التي كتبتها له زوجته قبل وفاتها، ويتخيل أنه ما زال يحادثها.",
+choices:[
+{
+text:"اعتباره غريبًا",
+result:"حكمت على المشهد دون معرفة قصته."
+},
+{
+text:"السخرية منه",
+result:"أضفت ألمًا إلى شخص يعيش ذكرياته."
+},
+{
+text:"التفكير في سبب تصرفه",
+result:"اكتشفت أن الحب والوفاء قد يبدوان غريبين أحيانًا."
+}
+]
+}
+];
+
+let userCharacter =
+localStorage.getItem("character") || "👧";
+let current=0;
+
+let completed =
+Number(localStorage.getItem("completed")) || 0;
+
+let points =
+Number(localStorage.getItem("points")) || 0;
+
+document.getElementById("completed").innerText =
+completed;
+
+document.getElementById("points").innerText =
+points;
+
+updateAchievement();
+
+function startStory(index){
+
+current=index;
+
+document.getElementById("home")
+.classList.add("hidden");
+
+document.getElementById("story")
+.classList.remove("hidden");
+
+showStory();
+
+}
+
+function showStory(){
+
+document.getElementById("storyTitle").innerText =
+stories[current].title;
+
+document.getElementById("storyImage").innerText =
+stories[current].image;
+
+document.getElementById("storyText").innerText =
+stories[current].text;
+
+document.getElementById("progressText").innerText =
+"القصة " + (current+1) + " من " + stories.length;
+
+let box =
+document.getElementById("choices");
+
+box.innerHTML="";
+
+stories[current].choices.forEach(choice=>{
+
+let btn =
+document.createElement("button");
+
+btn.innerText =
+choice.text;
+
+btn.onclick=function(){
+
+document.getElementById("result").innerText =
+choice.result;
+
+document.getElementById("resultBox")
+.classList.remove("hidden");
+
+};
+
+box.appendChild(btn);
+
+});
+
+document.getElementById("otherView")
+.classList.add("hidden");
+
+document.getElementById("resultBox")
+.classList.add("hidden");
+
+}
+
+function swapView(){
+
+let v =
+document.getElementById("otherView");
+
+v.classList.remove("hidden");
+
+v.innerHTML =
+"<div class='card'><strong>وجهة النظر الأخرى:</strong><br><br>"
++
+stories[current].view
++
+"</div>";
+
+}
+
+function nextStory(){
+
+completed++;
+
+points += 10;
+
+document.getElementById("progressBar").value =
+((current + 1) / stories.length) * 100;
+
+localStorage.setItem(
+"completed",
+completed
+);
+
+localStorage.setItem(
+"points",
+points
+);
+
+document.getElementById("completed").innerText =
+completed;
+
+document.getElementById("points").innerText =
+points;
+
+updateAchievement();
+
+if(current < stories.length-1){
+
+current++;
+
+showStory();
+
+}else{
+
+document.getElementById("story")
+.classList.add("hidden");
+
+document.getElementById("home")
+.classList.remove("hidden");
+
+let personality = "";
+
+let secretMessage = "";
+
+if(points >= 100){
+
+secretMessage = `
+<div class="card">
+
+🎁 تم فتح القصة السرية
+
+<br><br>
+
+لأنك حصلت على أعلى مستوى من التعاطف.
+
+</div>
+`;
+
+}
+
+if(points >= 100){
+personality = "🏆 بطل التعاطف";
+}
+else if(points >= 70){
+personality = "⭐ باحث عن الحقيقة";
+}
+else if(points >= 40){
+personality = "💛 مستمع جيد للآخرين";
+}
+else{
+personality = "🌱 في بداية رحلة التعاطف";
+}
+document.body.innerHTML=`
+<div class="screen">
+
+<h1>${userCharacter} 🏆 تهانينا</h1>
+
+<h2>👑 أصبحت بطل التعاطف</h2>
+
+<p>⭐ النقاط: ${points}</p>
+
+<p>
+💖 درجة التعاطف الخاصة بك:
+<b>${Math.min(100, points)}%</b>
+</p>
+
+<p>
+🌟 شخصيتك:
+<br><br>
+<b>${personality}</b>
+</p>
+
+<p>📚 القصص المكتملة: ${completed}</p>
+
+<p>
+💙 قبل أن تحكم على أي شخص...
+<br><br>
+تذكر أن لكل إنسان قصة لا تعرفها.
+<br><br>
+وربما لو كنت مكانه...
+لكنت فعلت الشيء نفسه.
+</p>
+
+${secretMessage}
+
+<button onclick="location.reload()">
+🔄 ابدأ من جديد
+</button>
+
+</div>
+`;
+
+
+
+
+}
+
+}
+
+function updateAchievement(){
+
+let achievement =
+document.getElementById("achievement");
+
+if(completed >= 4){
+
+achievement.innerHTML =
+"🏆 بطل التعاطف";
+
+}
+else if(completed >= 2){
+
+achievement.innerHTML =
+"🥈 متفهم جيد";
+
+}
+else if(completed >= 1){
+
+achievement.innerHTML =
+"🥉 مبتدئ التعاطف";
+
+}
+else{
+
+achievement.innerHTML = "";
+
+}
+
+}
+function resetProgress(){
+
+localStorage.removeItem("completed");
+localStorage.removeItem("points");
+
+completed = 0;
+points = 0;
+
+document.getElementById("completed").innerText = 0;
+document.getElementById("points").innerText = 0;
+
+document.getElementById("achievement").innerHTML = "" 
+
+
+}
+function chooseCharacter(character){
+
+userCharacter = character;
+
+localStorage.setItem(
+"character",
+character
+);
+
+}
+if('serviceWorker' in navigator){
+window.addEventListener('load',function(){
+navigator.serviceWorker.register('sw.js').catch(function(){});
+});
+}
+
+</script>
+
+</body>
+</html>
